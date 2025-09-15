@@ -1,0 +1,1129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Arcadia — 50+ Mini Games</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#6ee7b7; --muted:#9aa4b2; --glass: rgba(255,255,255,0.03);
+    --glass-2: rgba(255,255,255,0.02);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  html,body{height:100%;margin:0;background:
+    radial-gradient(1200px 600px at 10% 10%, rgba(41,50,65,0.25), transparent 12%),
+    radial-gradient(800px 400px at 95% 90%, rgba(110,231,183,0.06), transparent 8%),
+    var(--bg); color:#e6eef6; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;}
+  .app{
+    max-width:1200px;margin:24px auto;padding:20px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.01), transparent);
+    border-radius:14px; box-shadow: 0 8px 30px rgba(2,6,23,0.6); min-height:calc(100vh - 48px);
+    display:flex; gap:18px; flex-direction:column;
+  }
+  header{display:flex;align-items:center;gap:14px;justify-content:space-between;}
+  .brand{display:flex;gap:12px;align-items:center;}
+  .logo{
+    width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#60a5fa);
+    display:flex;align-items:center;justify-content:center;font-weight:700;color:#02121a;font-size:18px;box-shadow:0 6px 18px rgba(15,23,36,0.6);
+  }
+  h1{margin:0;font-size:20px;letter-spacing:-0.2px}
+  .controls{display:flex;gap:10px;align-items:center;}
+  .search{display:flex;align-items:center;background:var(--glass);padding:8px;border-radius:10px;gap:8px;}
+  .search input{background:transparent;border:0;color:var(--muted);outline:none;width:220px}
+  .menu{display:flex;gap:18px;align-items:flex-start;flex:1}
+  .left{
+    width:320px;min-width:260px;background:linear-gradient(180deg,var(--glass),transparent);
+    padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);height:calc(100% - 10px);
+    box-sizing:border-box;
+  }
+  .categories{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .chip{padding:8px 12px;border-radius:999px;background:var(--glass-2);cursor:pointer;color:var(--muted);font-size:13px}
+  .chip.active{background:linear-gradient(90deg, rgba(110,231,183,0.12), rgba(96,165,250,0.06)); color:var(--accent);box-shadow: inset 0 1px 0 rgba(255,255,255,0.02)}
+  .right{flex:1;display:flex;flex-direction:column;gap:12px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+  .tile{
+    background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);
+    border-radius:10px;padding:12px;cursor:pointer;border:1px solid rgba(255,255,255,0.03);display:flex;flex-direction:column;gap:8px;
+    transition:transform .14s ease,box-shadow .14s ease;
+  }
+  .tile:hover{transform:translateY(-6px);box-shadow:0 18px 40px rgba(2,6,23,0.6)}
+  .tile h3{margin:0;font-size:15px}
+  .tile p{margin:0;color:var(--muted);font-size:13px}
+  .meta{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted)}
+  .player{
+    height:560px;background:linear-gradient(180deg, rgba(255,255,255,0.015), transparent);
+    border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,0.03);display:flex;flex-direction:column;gap:8px;
+    min-height:400px;
+  }
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .play-area{flex:1;background:linear-gradient(180deg, rgba(0,0,0,0.2), rgba(255,255,255,0.01));border-radius:8px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+  canvas{max-width:100%;height:auto;display:block}
+  .hud{position:absolute;left:10px;top:10px;color:var(--muted);font-size:13px}
+  .btn{background:var(--accent);color:#042224;padding:8px 10px;border-radius:8px;border:0;font-weight:600;cursor:pointer}
+  .muted{color:var(--muted);font-size:13px}
+  .back{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);padding:8px 10px;border-radius:8px}
+  .mobile-controls{display:none;gap:8px;align-items:center}
+  .control-pad{display:flex;gap:6px;align-items:center}
+  .on-screen-btn{width:54px;height:54px;border-radius:10px;background:rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--muted);user-select:none;touch-action:none}
+  .kbd-hint{font-size:12px;color:var(--muted)}
+  footer{display:flex;justify-content:space-between;align-items:center;padding-top:8px;color:var(--muted);font-size:13px}
+  .hidden{display:none}
+  /* responsive */
+  @media (max-width:920px){
+    .menu{flex-direction:column;}
+    .left{width:100%;order:2}
+    .right{order:1}
+    .player{height:520px}
+    .mobile-controls{display:flex}
+  }
+</style>
+</head>
+<body>
+<div class="app" role="application" aria-label="Arcadia Games">
+  <header>
+    <div class="brand">
+      <div class="logo">AG</div>
+      <div>
+        <h1>Arcadia — 50+ Mini Games</h1>
+        <div class="muted">Tap a tile to play — responsive controls for mobile & keyboard for desktop</div>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="search" title="Search games">
+        🔎 <input id="search" placeholder="Search games or tags..." />
+      </div>
+      <button id="randomBtn" class="btn" title="Surprise me">Surprise me</button>
+    </div>
+  </header>
+
+  <div class="menu">
+    <aside class="left" aria-label="sidebar">
+      <strong class="muted">Categories</strong>
+      <div class="categories" id="categories"></div>
+
+      <div style="margin-top:14px">
+        <strong class="muted">Controls</strong>
+        <div style="margin-top:8px;color:var(--muted);font-size:13px">
+          Use arrow keys / WASD where available. On-screen buttons appear on mobile. Tap canvas to focus.
+        </div>
+      </div>
+
+      <div style="margin-top:14px">
+        <strong class="muted">High Scores</strong>
+        <div id="highscores" style="margin-top:8px;color:var(--muted);font-size:13px">No games played yet.</div>
+      </div>
+    </aside>
+
+    <section class="right">
+      <div class="player" id="player">
+        <div class="topbar">
+          <div>
+            <button id="backBtn" class="back hidden">← Back</button>
+            <span id="currentTitle" style="margin-left:8px;font-weight:700">Choose a game</span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div class="kbd-hint muted" id="controlsHint"></div>
+            <button id="restartBtn" class="btn hidden">Restart</button>
+          </div>
+        </div>
+
+        <div class="play-area" id="playArea" aria-live="polite">
+          <div style="text-align:center;color:var(--muted);padding:28px">
+            <h2 style="margin:6px 0">Welcome to Arcadia</h2>
+            <div style="max-width:520px;margin:6px auto" class="muted">Pick from the grid of 50+ curated micro-games to play instantly. Games are mobile-friendly — try the on-screen buttons on phones. Scores are saved locally.</div>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div class="muted">Built-in games: Pong, Snake, Breakout, Tic-Tac-Toe, Memory, Whack-a-Mole, Simon, Reaction, Typing, Color Clicker, Platform Jumper, Mini Maze + many variants.</div>
+          <div class="mobile-controls">
+            <div class="control-pad">
+              <div class="on-screen-btn" id="btn-left">◀</div>
+              <div class="on-screen-btn" id="btn-up">▲</div>
+              <div class="on-screen-btn" id="btn-down">▼</div>
+              <div class="on-screen-btn" id="btn-right">▶</div>
+            </div>
+            <div class="on-screen-btn" id="btn-action">●</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div style="margin-top:8px">
+        <strong class="muted">Games</strong>
+        <div class="grid" id="gameGrid" style="margin-top:10px"></div>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <div class="muted">Arcadia • Local playground • No external assets</div>
+    <div class="muted">Tip: press / to focus search</div>
+  </footer>
+</div>
+
+<script>
+/*
+  Arcadia: 50+ games hub
+  - Modular loader
+  - Implemented game modules below
+  - Remaining tiles are variants that call modules with different params
+*/
+
+// ---------------------- Utilities ----------------------
+const $ = id => document.getElementById(id);
+const sanitize = s => (s||'').toString();
+const storeKey = 'arcadia_highscores_v1';
+
+function saveHighScore(gameId,score){
+  const data = JSON.parse(localStorage.getItem(storeKey)||'{}');
+  if(!data[gameId] || score > data[gameId]) data[gameId]=score;
+  localStorage.setItem(storeKey, JSON.stringify(data));
+  renderHighscores();
+}
+function getHighScores(){ return JSON.parse(localStorage.getItem(storeKey)||'{}'); }
+function renderHighscores(){
+  const data = getHighScores();
+  const el = $('highscores');
+  const keys = Object.keys(data).sort((a,b)=>data[b]-data[a]).slice(0,6);
+  if(!keys.length) { el.textContent='No games played yet.'; return; }
+  el.innerHTML = keys.map(k=>`<div style="margin-bottom:6px">${k}: <strong style="color:var(--accent)">${data[k]}</strong></div>`).join('');
+}
+renderHighscores();
+
+// keyboard focus for search with '/'
+window.addEventListener('keydown', e=>{ if(e.key === '/' && !e.metaKey && !e.ctrlKey){ e.preventDefault(); $('search').focus(); } });
+
+// ---------------------- Game Registry ----------------------
+const GAMES = []; // will hold objects {id,title,desc,category,play}
+
+function registerGame(g){ GAMES.push(g); }
+function findGame(id){ return GAMES.find(g=>g.id===id); }
+
+// ---------------------- Canvas helper ----------------------
+function makeCanvas(w=800,h=520,parent=document.body){
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  canvas.style.width = '100%';
+  canvas.style.height = '100%';
+  canvas.tabIndex = 0; // focusable
+  parent.innerHTML = '';
+  parent.appendChild(canvas);
+  return canvas;
+}
+
+// ---------------------- Simple game engines ----------------------
+
+// 1) PONG
+registerGame({
+  id:'pong',
+  title:'Pong (Classic)',
+  desc:'Two paddles. Arrow keys / touch. Beat the AI or play vs friend (tap sides).',
+  category:'Arcade',
+  play: async ({container,params,done,updateUI})=>{
+    const canvas = makeCanvas(900,520,container);
+    const ctx = canvas.getContext('2d');
+    resizeCanvasToContainer(canvas);
+    let raf=0;
+    let w=canvas.width,h=canvas.height;
+    const padH=90, padW=16;
+    let p1Y=(h-padH)/2, p2Y=(h-padH)/2;
+    let p1Score=0,p2Score=0;
+    let ball = {x:w/2,y:h/2, vx:5*Math.sign(Math.random()-0.5||1), vy: (Math.random()*6-3)};
+    let keys = {};
+    let touchFlip=false;
+    updateUI({controlsHint:'Keys: W/S and Arrow Up/Down (or on-screen).'});
+    function draw(){
+      ctx.clearRect(0,0,w,h);
+      // background
+      ctx.fillStyle = '#071427';
+      ctx.fillRect(0,0,w,h);
+      // middle
+      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      ctx.fillRect(w/2-2,0,4,h);
+      // paddles
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(8,p1Y,padW,padH);
+      ctx.fillRect(w-8-padW,p2Y,padW,padH);
+      // ball
+      ctx.beginPath(); ctx.arc(ball.x,ball.y,10,0,Math.PI*2); ctx.fill();
+      // scores
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.font = '26px system-ui';
+      ctx.fillText(p1Score,w*0.25,40);
+      ctx.fillText(p2Score,w*0.75,40);
+    }
+    function step(){
+      // paddle control - left: W/S, right: arrow
+      const speed = 6;
+      if(keys['w']||keys['W']) p1Y -= speed;
+      if(keys['s']||keys['S']) p1Y += speed;
+      if(keys['ArrowUp']) p2Y -= speed;
+      if(keys['ArrowDown']) p2Y += speed;
+      p1Y = Math.max(0,Math.min(h-padH,p1Y));
+      p2Y = Math.max(0,Math.min(h-padH,p2Y));
+      // simple AI if no player on right
+      if(!keys['ArrowUp'] && !keys['ArrowDown']) {
+        // follow ball slowly
+        if(ball.y > p2Y + padH/2+6) p2Y += 3.2;
+        if(ball.y < p2Y + padH/2-6) p2Y -= 3.2;
+      }
+      // ball physics
+      ball.x += ball.vx; ball.y += ball.vy;
+      if(ball.y < 10 || ball.y > h-10){ ball.vy *= -1; }
+      // paddle collisions
+      if(ball.x - 10 < 8 + padW && ball.y > p1Y && ball.y < p1Y+padH){
+        ball.vx = Math.abs(ball.vx) + 0.6; // speed up slightly
+        ball.vx *= -1;
+        // add spin
+        ball.vy += (ball.y - (p1Y+padH/2))*0.03;
+      }
+      if(ball.x + 10 > w-8-padW && ball.y > p2Y && ball.y < p2Y+padH){
+        ball.vx = -Math.abs(ball.vx) - 0.6;
+        ball.vy += (ball.y - (p2Y+padH/2))*0.03;
+      }
+      // scoring
+      if(ball.x < -20){ p2Score++; resetBall(); }
+      if(ball.x > w+20){ p1Score++; resetBall(); }
+      // end condition
+      if(p1Score >= 7 || p2Score >= 7){
+        saveHighScore('Pong', Math.max(p1Score,p2Score));
+        done && done({score: Math.max(p1Score,p2Score)});
+        return;
+      }
+      draw();
+      raf = requestAnimationFrame(step);
+    }
+    function resetBall(){
+      ball.x = w/2; ball.y = h/2;
+      ball.vx = 5*Math.sign(Math.random()-0.5||1);
+      ball.vy = (Math.random()*6-3);
+    }
+    // input
+    function onKey(e){ keys[e.key]= e.type === 'keydown'; }
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('keyup', onKey);
+    // touch controls: tap left/right side to nudge paddles
+    canvas.addEventListener('touchstart', e=>{
+      e.preventDefault();
+      const t = e.touches[0]; const rect = canvas.getBoundingClientRect();
+      const x = t.clientX - rect.left;
+      if(x < rect.width/2) { p1Y = Math.max(0,Math.min(h-padH,p1Y - 30)); }
+      else { p2Y = Math.max(0,Math.min(h-padH,p2Y - 30)); }
+    }, {passive:false});
+
+    // make responsive
+    window.addEventListener('resize', ()=>resizeCanvasToContainer(canvas));
+    step();
+
+    // cleanup
+    return ()=>{ cancelAnimationFrame(raf); window.removeEventListener('keydown',onKey); window.removeEventListener('keyup',onKey); };
+  }
+});
+
+// 2) SNAKE
+registerGame({
+  id:'snake',
+  title:'Snake',
+  desc:'Classic snake — Arrow keys or swipe. Eat squares to grow.',
+  category:'Arcade',
+  play: async ({container,params,done,updateUI})=>{
+    const canvas = makeCanvas(720,540,container);
+    const ctx = canvas.getContext('2d');
+    let w=canvas.width,h=canvas.height;
+    resizeCanvasToContainer(canvas);
+    const cols = 24, rows = Math.floor(h/(w/cols));
+    const cell = Math.floor(w/cols);
+    let snake = [{x:Math.floor(cols/2),y:Math.floor(rows/2)}];
+    let dir = {x:1,y:0}, pending=null;
+    let apple = spawnApple();
+    let speed = 120; let moving=false; let score=0;
+    updateUI({controlsHint:'Arrows/WASD to move. Tap direction on mobile.'});
+    let tlast = performance.now();
+    let raf=0;
+
+    function spawnApple(){
+      while(true){
+        const x = Math.floor(Math.random()*cols);
+        const y = Math.floor(Math.random()*rows);
+        if(!snake.some(s=>s.x===x && s.y===y)) return {x,y};
+      }
+    }
+    function step(now){
+      if(now - tlast > speed){
+        tlast = now;
+        if(pending) { dir = pending; pending=null;}
+        const head = {x:snake[0].x + dir.x, y:snake[0].y + dir.y};
+        // collisons
+        if(head.x < 0 || head.x >= cols || head.y < 0 || head.y >= rows || snake.some(s=>s.x===head.x && s.y===head.y)){
+          saveHighScore('Snake', score);
+          done && done({score}); return;
+        }
+        snake.unshift(head);
+        if(head.x === apple.x && head.y === apple.y){
+          score += 1; apple = spawnApple();
+          if(score % 5 === 0) speed = Math.max(40, speed - 10);
+        } else snake.pop();
+      }
+      draw();
+      raf = requestAnimationFrame(step);
+    }
+    function draw(){
+      ctx.clearRect(0,0,w,h);
+      ctx.fillStyle = '#061426';
+      ctx.fillRect(0,0,w,h);
+      // apple
+      ctx.fillStyle = '#ff5a5f';
+      ctx.fillRect(apple.x*cell+2, apple.y*cell+2, cell-4, cell-4);
+      // snake
+      ctx.fillStyle = '#6ee7b7';
+      snake.forEach((s,i)=>{
+        ctx.fillRect(s.x*cell+2, s.y*cell+2, cell-4, cell-4);
+      });
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      ctx.font = '16px system-ui';
+      ctx.fillText('Score: '+score, 14, 20);
+    }
+    // keyboard
+    function key(e){
+      const k = e.key;
+      if(e.type==='keydown'){
+        if(k==='ArrowUp'||k==='w'||k==='W') pending = {x:0,y:-1};
+        if(k==='ArrowDown'||k==='s'||k==='S') pending = {x:0,y:1};
+        if(k==='ArrowLeft'||k==='a'||k==='A') pending = {x:-1,y:0};
+        if(k==='ArrowRight'||k==='d'||k==='D') pending = {x:1,y:0};
+        moving=true;
+      }
+    }
+    window.addEventListener('keydown', key);
+    // touch swipe
+    let sx, sy;
+    canvas.addEventListener('touchstart', e=>{ const t=e.touches[0]; sx=t.clientX; sy=t.clientY; }, {passive:true});
+    canvas.addEventListener('touchend', e=>{
+      const t = e.changedTouches[0]; const dx = t.clientX - sx, dy = t.clientY - sy;
+      if(Math.abs(dx) > Math.abs(dy)){
+        if(dx>10) pending = {x:1,y:0}; else if(dx<-10) pending = {x:-1,y:0};
+      } else {
+        if(dy>10) pending = {x:0,y:1}; else if(dy<-10) pending = {x:0,y:-1};
+      }
+      moving=true;
+    }, {passive:true});
+
+    window.addEventListener('resize', ()=>resizeCanvasToContainer(canvas));
+    raf = requestAnimationFrame(step);
+
+    return ()=>{ cancelAnimationFrame(raf); window.removeEventListener('keydown',key); };
+  }
+});
+
+// 3) BREAKOUT
+registerGame({
+  id:'breakout',
+  title:'Breakout',
+  desc:'Bounce the ball, break bricks. Touch or mouse to move paddle.',
+  category:'Arcade',
+  play: async ({container,params,done,updateUI})=>{
+    const canvas = makeCanvas(900,520,container);
+    const ctx = canvas.getContext('2d'); resizeCanvasToContainer(canvas);
+    const w = canvas.width, h = canvas.height;
+    let raf=0;
+    let paddle = {x: w/2 - 60, y: h-36, w:120, h:12};
+    let ball = {x:w/2,y:h-60, vx:4, vy:-5, r:8};
+    const cols=10, rows=4; const brickW = Math.floor((w-80)/cols); const brickH = 20;
+    let bricks = [];
+    for(let r=0;r<rows;r++){
+      for(let c=0;c<cols;c++){
+        bricks.push({x:40+c*brickW, y:40 + r*(brickH+8), w:brickW-6, h:brickH, hit:false});
+      }
+    }
+    let score = 0;
+    updateUI({controlsHint:'Mouse/touch to move paddle. Space to release ball.'});
+    function draw(){
+      ctx.clearRect(0,0,w,h);
+      ctx.fillStyle = '#03121d'; ctx.fillRect(0,0,w,h);
+      // bricks
+      bricks.forEach(b=>{
+        if(!b.hit){
+          ctx.fillStyle = '#60a5fa';
+          ctx.fillRect(b.x,b.y,b.w,b.h);
+        }
+      });
+      // paddle
+      ctx.fillStyle = '#6ee7b7'; ctx.fillRect(paddle.x,paddle.y,paddle.w,paddle.h);
+      // ball
+      ctx.beginPath(); ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.font='16px system-ui';
+      ctx.fillText('Score: '+score, 12, 20);
+    }
+    function step(){
+      ball.x += ball.vx; ball.y += ball.vy;
+      if(ball.x - ball.r < 0 || ball.x + ball.r > w) ball.vx *= -1;
+      if(ball.y - ball.r < 0) ball.vy *= -1;
+      if(ball.y > h + 50){ saveHighScore('Breakout', score); done && done({score}); return; }
+      // paddle collision
+      if(ball.y + ball.r >= paddle.y && ball.x > paddle.x && ball.x < paddle.x + paddle.w){
+        ball.vy *= -1; // bounce
+        // change angle depending on hit position
+        const hitPos = (ball.x - (paddle.x + paddle.w/2))/ (paddle.w/2);
+        ball.vx += hitPos * 2;
+      }
+      // bricks
+      bricks.forEach(b=>{
+        if(!b.hit){
+          if(ball.x > b.x && ball.x < b.x + b.w && ball.y - ball.r < b.y + b.h && ball.y + ball.r > b.y){
+            b.hit = true; ball.vy *= -1; score += 10;
+          }
+        }
+      });
+      // win check
+      if(bricks.every(b=>b.hit)){ saveHighScore('Breakout', score); done && done({score}); return; }
+      draw();
+      raf = requestAnimationFrame(step);
+    }
+    // mouse/touch control
+    canvas.addEventListener('mousemove', e=>{
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      paddle.x = Math.max(10, Math.min(w - paddle.w - 10, x - paddle.w/2));
+    });
+    canvas.addEventListener('touchmove', e=>{
+      const rect = canvas.getBoundingClientRect();
+      const t = e.touches[0]; const x = t.clientX - rect.left;
+      paddle.x = Math.max(10, Math.min(w - paddle.w - 10, x - paddle.w/2));
+    }, {passive:true});
+    window.addEventListener('keydown', e=>{ if(e.key===' ') ball.vy = -5; });
+    raf = requestAnimationFrame(step);
+    return ()=>{ cancelAnimationFrame(raf); };
+  }
+});
+
+// 4) TIC-TAC-TOE
+registerGame({
+  id:'ttt',
+  title:'Tic-Tac-Toe',
+  desc:'Classic 3x3 — play vs AI or two players.',
+  category:'Puzzle',
+  play: async ({container,params,done,updateUI})=>{
+    container.innerHTML = '';
+    const board = document.createElement('div');
+    board.style.display='grid'; board.style.gridTemplateColumns='repeat(3,1fr)';
+    board.style.gap='6px'; board.style.width='360px'; board.style.margin='18px auto';
+    container.appendChild(board);
+    const state = Array(9).fill(null);
+    let turn='X';
+    updateUI({controlsHint:'Tap a cell to play.'});
+    function aiMove(){
+      // simple AI: win if possible, block if necessary, random
+      const s=state;
+      const winCombos=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+      function canPlay(mark){
+        for(const c of winCombos){
+          const [a,b,c2]=c;
+          const arr=[s[a],s[b],s[c2]];
+          if(arr.filter(x=>x===mark).length===2 && arr.filter(x=>x===null).length===1){
+            const idx = [a,b,c2][arr.indexOf(null)]; return idx;
+          }
+        }
+        return -1;
+      }
+      let idx = canPlay('O');
+      if(idx<0) idx = canPlay('X');
+      if(idx<0) {
+        const empties = s.map((v,i)=>v===null?i:-1).filter(v=>v>=0);
+        idx = empties[Math.floor(Math.random()*empties.length)];
+      }
+      if(idx>=0) {
+        state[idx]='O'; render();
+      }
+    }
+    function checkWin(){
+      const s=state;
+      const combos=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+      for(const c of combos){
+        const [a,b,c2]=c;
+        if(s[a] && s[a]===s[b] && s[a]===s[c2]) return s[a];
+      }
+      if(s.every(x=>x!==null)) return 'draw';
+      return null;
+    }
+    function render(){
+      board.innerHTML='';
+      state.forEach((v,i)=>{
+        const cell = document.createElement('div');
+        cell.style.background='linear-gradient(180deg,#071427, #081827)';
+        cell.style.border='1px solid rgba(255,255,255,0.03)';
+        cell.style.height='110px'; cell.style.display='flex'; cell.style.alignItems='center'; cell.style.justifyContent='center';
+        cell.style.fontSize='48px'; cell.style.color='#6ee7b7'; cell.style.cursor='pointer';
+        cell.textContent = v||'';
+        cell.addEventListener('click', ()=>{
+          if(state[i]||checkWin()) return;
+          state[i] = 'X'; render();
+          const win = checkWin();
+          if(!win){ aiMove(); }
+          const final = checkWin();
+          if(final){
+            setTimeout(()=>{ alert(final==='draw' ? 'Draw!' : final + ' wins!'); }, 100);
+            if(final==='X' || final==='O') saveHighScore('TicTacToe', 1);
+            done && done({score: final==='draw'?0:1});
+          }
+        });
+        board.appendChild(cell);
+      });
+    }
+    render();
+    return ()=>{};
+  }
+});
+
+// 5) MEMORY MATCH
+registerGame({
+  id:'memory',
+  title:'Memory (Matching Pairs)',
+  desc:'Flip pairs to find matches. Try to beat the fewest flips.',
+  category:'Puzzle',
+  play: async ({container,params,done,updateUI})=>{
+    container.innerHTML='';
+    updateUI({controlsHint:'Tap cards to flip.'});
+    const gridSize = 4; // 4x4 => 8 pairs
+    const total = gridSize*gridSize;
+    const cards = [];
+    for(let i=0;i<total/2;i++){ cards.push(i); cards.push(i); }
+    shuffle(cards);
+    const board = document.createElement('div');
+    board.style.display='grid'; board.style.gridTemplateColumns=`repeat(${gridSize},1fr)`;
+    board.style.gap='8px'; board.style.maxWidth='520px'; board.style.margin='12px auto';
+    container.appendChild(board);
+    let flipped = [], matched=Array(total).fill(false), flips=0;
+    function render(){
+      board.innerHTML='';
+      for(let i=0;i<total;i++){
+        const c = document.createElement('div');
+        c.style.height='90px'; c.style.borderRadius='8px'; c.style.display='flex'; c.style.alignItems='center'; c.style.justifyContent='center';
+        c.style.background = matched[i] ? 'linear-gradient(90deg,#6ee7b7,#60a5fa)' : '#061425';
+        c.style.color = matched[i] ? '#021212' : '#fff';
+        c.style.fontSize='28px';
+        c.textContent = (flipped.includes(i) || matched[i]) ? cards[i] : '';
+        c.addEventListener('click', ()=>{
+          if(matched[i] || flipped.includes(i) || flipped.length===2) return;
+          flipped.push(i); flips++;
+          if(flipped.length===2){
+            const [a,b] = flipped;
+            if(cards[a]===cards[b]){ matched[a]=matched[b]=true; flipped=[]; if(matched.every(Boolean)){ saveHighScore('Memory', 1000 - flips); done && done({score:1000-flips}); } }
+            else setTimeout(()=>{ flipped=[]; render(); }, 700);
+          }
+          render();
+        });
+        board.appendChild(c);
+      }
+    }
+    render();
+    return ()=>{};
+  }
+});
+
+// 6) WHACK-A-MOLE
+registerGame({
+  id:'whack',
+  title:'Whack-a-Mole',
+  desc:'Tap the moles! Speed increases over time.',
+  category:'Arcade',
+  play: async ({container,params,done,updateUI})=>{
+    const grid=3;
+    container.innerHTML='';
+    updateUI({controlsHint:'Tap or click moles.'});
+    const area = document.createElement('div');
+    area.style.display='grid'; area.style.gridTemplateColumns=`repeat(${grid},1fr)`; area.style.gap='12px';
+    area.style.maxWidth='520px'; area.style.margin='20px auto';
+    container.appendChild(area);
+    let cells = [];
+    for(let i=0;i<grid*grid;i++){
+      const c = document.createElement('div');
+      c.style.height='120px'; c.style.borderRadius='10px'; c.style.background='#062733'; c.style.display='flex'; c.style.justifyContent='center'; c.style.alignItems='center';
+      c.style.fontSize='32px'; c.style.color='#fff';
+      area.appendChild(c); cells.push(c);
+    }
+    let score=0; let active=-1; let running=true; let speed = 1000;
+    function spawn(){
+      if(!running) return;
+      active = Math.floor(Math.random()*cells.length);
+      cells.forEach((c,i)=> c.textContent = (i===active) ? '🐹' : '');
+      setTimeout(()=>{
+        if(active>=0){ cells[active].textContent=''; active=-1; }
+        spawn();
+      }, speed);
+      // speed up gradually
+      speed = Math.max(350, speed - 6);
+    }
+    cells.forEach((c,i)=> c.addEventListener('click', ()=>{
+      if(i===active){ score+=1; cells[i].textContent='💥'; active=-1; }
+    }));
+    const scoreEl = document.createElement('div'); scoreEl.style.textAlign='center'; scoreEl.style.marginTop='8px'; scoreEl.textContent='Score: 0'; container.appendChild(scoreEl);
+    const interval = setInterval(()=>{ scoreEl.textContent = 'Score: '+score; }, 150);
+    spawn();
+    // end after 30s
+    const endTimer = setTimeout(()=>{ running=false; clearInterval(interval); saveHighScore('Whack', score); done && done({score}); }, 30000);
+    return ()=>{ running=false; clearInterval(interval); clearTimeout(endTimer); };
+  }
+});
+
+// 7) REACTION TEST
+registerGame({
+  id:'reaction',
+  title:'Reaction Tester',
+  desc:'Tap as soon as the screen turns green. Measures ms reaction time.',
+  category:'Skill',
+  play: async ({container,params,done,updateUI})=>{
+    container.innerHTML='';
+    const box = document.createElement('div');
+    box.style.width='320px'; box.style.height='200px'; box.style.margin='30px auto'; box.style.borderRadius='12px'; box.style.display='flex'; box.style.alignItems='center'; box.style.justifyContent='center'; box.style.fontSize='20px';
+    container.appendChild(box);
+    updateUI({controlsHint:'Tap when it turns green.'});
+    let state='ready', start=0, trials=[], timeoutId;
+    function toReady(){
+      state='wait'; box.textContent='Wait for green...'; box.style.background='#202c38';
+      const delay = 1000 + Math.random()*2500;
+      timeoutId = setTimeout(()=>{ state='go'; start=performance.now(); box.style.background='#1f5f2a'; box.textContent='GO! Tap!'; }, delay);
+    }
+    box.addEventListener('click', ()=>{
+      if(state==='ready') toReady();
+      else if(state==='wait'){ // false start
+        clearTimeout(timeoutId); box.style.background='#5a1f1f'; box.textContent='Too soon! Tap to try again'; state='ready';
+      } else if(state==='go'){
+        const t = performance.now() - start;
+        trials.push(t); box.style.background='#11303b'; box.textContent = 'Time: '+Math.round(t)+' ms. Tap to retry.';
+        state='ready';
+        if(trials.length>=5){ const avg = Math.round(trials.reduce((a,b)=>a+b,0)/trials.length); saveHighScore('Reaction', Math.max(0,1000-avg)); done && done({score: Math.max(0,1000-avg)}); }
+      }
+    });
+    box.click();
+    return ()=>{ clearTimeout(timeoutId); };
+  }
+});
+
+// 8) SIMON SAYS
+registerGame({
+  id:'simon',
+  title:'Simon Says',
+  desc:'Repeat the sequence. Memory & timing.',
+  category:'Puzzle',
+  play: async ({container,params,done,updateUI})=>{
+    container.innerHTML='';
+    updateUI({controlsHint:'Tap colored pads to repeat sequence.'});
+    const colors = ['#60a5fa','#6ee7b7','#f59e0b','#f472b6'];
+    const area = document.createElement('div'); area.style.display='grid'; area.style.gridTemplateColumns='repeat(2,160px)'; area.style.gridGap='12px'; area.style.margin='20px auto';
+    container.appendChild(area);
+    const pads = [];
+    for(let i=0;i<4;i++){
+      const p = document.createElement('div'); p.style.width='160px'; p.style.height='160px'; p.style.borderRadius='12px'; p.style.background=colors[i]; p.style.opacity='0.6';
+      p.dataset.i = i; p.style.display='flex'; p.style.alignItems='center'; p.style.justifyContent='center'; p.style.fontSize='24px';
+      area.appendChild(p); pads.push(p);
+    }
+    let seq=[], idx=0, playing=true;
+    function nextRound(){ seq.push(Math.floor(Math.random()*4)); playSeq(); }
+    async function playSeq(){
+      playing=false; for(const s of seq){ await flash(s); await wait(350); } playing=true; idx=0;
+    }
+    function flash(i){ return new Promise(res=>{ pads[i].style.opacity='1'; setTimeout(()=>{ pads[i].style.opacity='0.6'; res(); }, 400); }); }
+    function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
+    pads.forEach(p=> p.addEventListener('click', ()=>{
+      if(!playing) return;
+      const i = +p.dataset.i; flash(i);
+      if(seq[idx]===i){ idx++; if(idx===seq.length){ nextRound(); } } else { alert('Wrong — game over!'); saveHighScore('Simon', seq.length); done && done({score: seq.length}); } 
+    }));
+    seq.push(Math.floor(Math.random()*4)); nextRound();
+    return ()=>{};
+  }
+});
+
+// 9) TYPING TEST
+registerGame({
+  id:'typing',
+  title:'Typing Sprint',
+  desc:'Type the shown words quickly. Measures WPM and accuracy.',
+  category:'Skill',
+  play: async ({container,params,done,updateUI})=>{
+    container.innerHTML='';
+    updateUI({controlsHint:'Type the words and press space.'});
+    const words = "arcade river stone magic code pixel color comet star rapid neon glass cloud wave breeze".split(' ');
+    let shown = [];
+    for(let i=0;i<10;i++) shown.push(words[Math.floor(Math.random()*words.length)]);
+    const textDiv = document.createElement('div'); textDiv.style.textAlign='center'; textDiv.style.margin='14px';
+    textDiv.innerHTML = `<div style="font-size:22px">${shown.join(' ')}</div>`;
+    container.appendChild(textDiv);
+    const input = document.createElement('input'); input.style.width='90%'; input.style.margin='10px auto'; input.style.display='block'; input.autofocus=true;
+    container.appendChild(input);
+    const info = document.createElement('div'); info.style.textAlign='center'; info.style.color='var(--muted)'; info.textContent='Start typing to begin...';
+    container.appendChild(info);
+    let start=0, typed=0, mistakes=0;
+    input.addEventListener('input', ()=>{
+      if(!start) start = performance.now();
+      const val = input.value.trim();
+      if(val.endsWith(' ')){
+        const w = val.trim();
+        typed++;
+        if(w !== shown[typed-1]) mistakes++;
+        input.value='';
+        if(typed >= shown.length){
+          const seconds = (performance.now()-start)/1000;
+          const wpm = Math.round((shown.length / seconds) * 60);
+          alert(`Result: ${wpm} WPM, mistakes: ${mistakes}`);
+          saveHighScore('Typing', wpm);
+          done && done({score:wpm});
+        }
+      }
+    });
+    return ()=>{};
+  }
+});
+
+// 10) COLOR CLICKER
+registerGame({
+  id:'colorclick',
+  title:'Color Clicker',
+  desc:'Click the indicated color tile as it shuffles. Speed up to win.',
+  category:'Casual',
+  play: async ({container,params,done,updateUI})=>{
+    container.innerHTML='';
+    updateUI({controlsHint:'Tap the target color tile.'});
+    const colors = ['#60a5fa','#6ee7b7','#f59e0b','#f97316','#ef4444','#8b5cf6'];
+    let target = colors[Math.floor(Math.random()*colors.length)];
+    const targetLabel = document.createElement('div'); targetLabel.style.textAlign='center'; targetLabel.textContent='Target:';
+    const targetBox = document.createElement('div'); targetBox.style.width='48px'; targetBox.style.height='28px'; targetBox.style.background=target; targetBox.style.display='inline-block'; targetBox.style.marginLeft='8px';
+    targetLabel.appendChild(targetBox);
+    container.appendChild(targetLabel);
+    const grid = document.createElement('div'); grid.style.display='grid'; grid.style.gridTemplateColumns='repeat(3,120px)'; grid.style.gap='10px'; grid.style.marginTop='12px'; container.appendChild(grid);
+    let score=0; let time=2000;
+    function makeTiles(){
+      grid.innerHTML='';
+      const pool = colors.slice();
+      shuffle(pool);
+      for(let c of pool.slice(0,9)){
+        const t = document.createElement('div'); t.style.width='120px'; t.style.height='80px'; t.style.background=c; t.style.borderRadius='10px';
+        t.addEventListener('click', ()=>{ if(c===target){ score++; time = Math.max(400, time - 60); target = colors[Math.floor(Math.random()*colors.length)]; targetBox.style.background = target; makeTiles(); } else { alert('Wrong color! Score: '+score); saveHighScore('ColorClick', score); done && done({score}); } });
+        grid.appendChild(t);
+      }
+    }
+    makeTiles();
+    return ()=>{};
+  }
+});
+
+// 11) PLATFORM JUMPER (simple)
+registerGame({
+  id:'platform',
+  title:'Platform Jumper',
+  desc:'Jump across floating platforms. Arrow keys / swipe to move and jump.',
+  category:'Platformer',
+  play: async ({container,params,done,updateUI})=>{
+    const canvas = makeCanvas(720,520,container);
+    const ctx = canvas.getContext('2d'); resizeCanvasToContainer(canvas);
+    let w=canvas.width,h=canvas.height;
+    updateUI({controlsHint:'Arrows/WASD to move; Space to jump. Touch to tap.'});
+    const gravity=0.5;
+    let player = {x:50,y:200,w:28,h:34,vx:0,vy:0,on:false};
+    const platforms = [
+      {x:0,y:h-40,w:h*1.2,h:40},
+      {x:160,y:380,w:120,h:12},
+      {x:320,y:300,w:120,h:12},
+      {x:520,y:220,w:120,h:12},
+      {x:700,y:140,w:120,h:12},
+    ];
+    let raf=0, score=0;
+    function draw(){
+      ctx.clearRect(0,0,w,h);
+      ctx.fillStyle='#081827'; ctx.fillRect(0,0,w,h);
+      // platforms
+      ctx.fillStyle='#60a5fa';
+      platforms.forEach(p=> ctx.fillRect(p.x,p.y,p.w,p.h));
+      // player
+      ctx.fillStyle='#6ee7b7'; ctx.fillRect(player.x,player.y,player.w,player.h);
+      ctx.fillStyle='rgba(255,255,255,0.8)'; ctx.font='16px system-ui';
+      ctx.fillText('Score: '+score, 12, 20);
+    }
+    function step(){
+      player.vy += gravity;
+      player.x += player.vx; player.y += player.vy;
+      // collisions
+      player.on = false;
+      for(const p of platforms){
+        if(player.x + player.w > p.x && player.x < p.x + p.w && player.y + player.h > p.y && player.y + player.h < p.y + p.h + 20 && player.vy >= 0){
+          player.y = p.y - player.h; player.vy = 0; player.on = true;
+        }
+      }
+      if(player.y > h + 100){ saveHighScore('Platform', score); done && done({score}); return; }
+      // move world slowly to the left to simulate progress
+      platforms.forEach(p => { p.x -= 0.6; if(p.x + p.w < -50){ p.x = w + Math.random()*200; p.y = 80 + Math.random()*340; }});
+      score += 0.02;
+      draw();
+      raf = requestAnimationFrame(step);
+    }
+    // controls
+    const keys = {};
+    window.addEventListener('keydown', e=> keys[e.key]=true);
+    window.addEventListener('keyup', e=> keys[e.key]=false);
+    function controlLoop(){
+      if(keys['ArrowLeft']||keys['a']||keys['A']) player.vx = -3;
+      else if(keys['ArrowRight']||keys['d']||keys['D']) player.vx = 3;
+      else player.vx = 0;
+      if((keys[' ']||keys['ArrowUp']||keys['w']||keys['W']) && player.on){ player.vy = -10; player.on = false; }
+      requestAnimationFrame(controlLoop);
+    }
+    controlLoop();
+    resizeCanvasToContainer(canvas);
+    raf = requestAnimationFrame(step);
+    return ()=>{ cancelAnimationFrame(raf); };
+  }
+});
+
+// 12) MINI MAZE (top-down)
+registerGame({
+  id:'maze',
+  title:'Mini Maze',
+  desc:'Navigate the maze to the exit. Arrow keys or touch to move.',
+  category:'Puzzle',
+  play: async ({container,params,done,updateUI})=>{
+    const canvas = makeCanvas(640,480,container);
+    const ctx = canvas.getContext('2d'); resizeCanvasToContainer(canvas);
+    let w=canvas.width,h=canvas.height;
+    const cols = 15, rows = 11;
+    const cell = Math.floor(Math.min(w/cols, h/rows));
+    const gridW = cols*cell, gridH=rows*cell;
+    // generate simple maze using DFS
+    function genMaze(){
+      const vis = Array(rows).fill(0).map(()=>Array(cols).fill(false));
+      const walls = Array(rows).fill(0).map(()=>Array(cols).fill({r: true, d: true})); // right & down walls
+      for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) walls[r][c] = {r:true,d:true};
+      function dfs(r,c){
+        vis[r][c]=true;
+        const dirs = [[1,0],[ -1,0],[0,1],[0,-1]]; shuffle(dirs);
+        for(const [dr,dc] of dirs){
+          const nr=r+dr,nc=c+dc;
+          if(nr>=0 && nr<rows && nc>=0 && nc<cols && !vis[nr][nc]){
+            if(dr===1) walls[r][c].d = false;
+            if(dr===-1) walls[nr][nc].d = false;
+            if(dc===1) walls[r][c].r = false;
+            if(dc===-1) walls[r][nc].r = false;
+            dfs(nr,nc);
+          }
+        }
+      }
+      dfs(0,0);
+      return walls;
+    }
+    const walls = genMaze();
+    let player = {r:0,c:0};
+    const exit = {r:rows-1,c:cols-1};
+    updateUI({controlsHint:'Arrow keys or swipe to move.'});
+    function draw(){
+      ctx.clearRect(0,0,w,h);
+      ctx.fillStyle='#031827'; ctx.fillRect(0,0,w,h);
+      ctx.save(); ctx.translate((w-gridW)/2,(h-gridH)/2);
+      ctx.strokeStyle='#cfeff0'; ctx.lineWidth=2;
+      for(let r=0;r<rows;r++){
+        for(let c=0;c<cols;c++){
+          const x=c*cell, y=r*cell;
+          if(walls[r][c].r) { ctx.beginPath(); ctx.moveTo(x+cell,y); ctx.lineTo(x+cell,y+cell); ctx.stroke(); }
+          if(walls[r][c].d) { ctx.beginPath(); ctx.moveTo(x,y+cell); ctx.lineTo(x+cell,y+cell); ctx.stroke(); }
+        }
+      }
+      // player
+      ctx.fillStyle='#6ee7b7'; ctx.fillRect(player.c*cell+6, player.r*cell+6, cell-12, cell-12);
+      ctx.fillStyle='#60a5fa'; ctx.fillRect(exit.c*cell+6, exit.r*cell+6, cell-12, cell-12);
+      ctx.restore();
+    }
+    function canMove(r,c,dir){
+      if(dir==='L') { if(c<=0) return false; if(walls[r][c-1].r) return false; return true; }
+      if(dir==='R') { if(c>=cols-1) return false; if(walls[r][c].r) return false; return true; }
+      if(dir==='U') { if(r<=0) return false; if(walls[r-1][c].d) return false; return true; }
+      if(dir==='D') { if(r>=rows-1) return false; if(walls[r][c].d) return false; return true; }
+    }
+    window.addEventListener('keydown', onKey);
+    function onKey(e){
+      if(e.key==='ArrowLeft' && canMove(player.r,player.c,'L')) player.c--;
+      if(e.key==='ArrowRight' && canMove(player.r,player.c,'R')) player.c++;
+      if(e.key==='ArrowUp' && canMove(player.r,player.c,'U')) player.r--;
+      if(e.key==='ArrowDown' && canMove(player.r,player.c,'D')) player.r++;
+      draw();
+      if(player.r===exit.r && player.c===exit.c){ alert('You escaped!'); saveHighScore('Maze', 1000); done && done({score:1000}); }
+    }
+    // touch swipe
+    let sx,sy;
+    canvas.addEventListener('touchstart', e=>{ const t=e.touches[0]; sx=t.clientX; sy=t.clientY; }, {passive:true});
+    canvas.addEventListener('touchend', e=>{ const t=e.changedTouches[0]; const dx=t.clientX-sx, dy=t.clientY-sy;
+      if(Math.abs(dx)>Math.abs(dy)){ if(dx>20 && canMove(player.r,player.c,'R')) player.c++; if(dx<-20 && canMove(player.r,player.c,'L')) player.c--; }
+      else { if(dy>20 && canMove(player.r,player.c,'D')) player.r++; if(dy<-20 && canMove(player.r,player.c,'U')) player.r--; }
+      draw();
+      if(player.r===exit.r && player.c===exit.c){ alert('You escaped!'); saveHighScore('Maze', 1000); done && done({score:1000}); }
+    }, {passive:true});
+    draw();
+    return ()=>{ window.removeEventListener('keydown', onKey); };
+  }
+});
+
+// ----- Utility functions used by engines -----
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
+}
+function resizeCanvasToContainer(canvas){
+  // adapt canvas scale for high-DPI and responsive container
+  const rect = canvas.getBoundingClientRect();
+  const ratio = window.devicePixelRatio || 1;
+  const w = Math.max(320, Math.round(rect.width * ratio));
+  const h = Math.max(240, Math.round(rect.height * ratio));
+  if(canvas.width !== w || canvas.height !== h){
+    canvas.width = w; canvas.height=h;
+    const ctx = canvas.getContext('2d'); ctx.imageSmoothingEnabled = false;
+  }
+}
+
+// ---------------------- Build menu with 50+ tiles ----------------------
+const baseTiles = [
+  {id:'pong',title:'Pong (Classic)',tag:'arcade',cat:'Arcade'},
+  {id:'snake',title:'Snake',tag:'arcade',cat:'Arcade'},
+  {id:'breakout',title:'Breakout',tag:'arcade',cat:'Arcade'},
+  {id:'ttt',title:'Tic-Tac-Toe',tag:'puzzle',cat:'Puzzle'},
+  {id:'memory',title:'Memory Match',tag:'puzzle',cat:'Puzzle'},
+  {id:'whack',title:'Whack-a-Mole',tag:'arcade',cat:'Arcade'},
+  {id:'reaction',title:'Reaction Test',tag:'skill',cat:'Skill'},
+  {id:'simon',title:'Simon Says',tag:'puzzle',cat:'Puzzle'},
+  {id:'typing',title:'Typing Sprint',tag:'skill',cat:'Skill'},
+  {id:'colorclick',title:'Color Clicker',tag:'casual',cat:'Casual'},
+  {id:'platform',title:'Platform Jumper',tag:'platformer',cat:'Platformer'},
+  {id:'maze',title:'Mini Maze',tag:'puzzle',cat:'Puzzle'},
+];
+
+// We'll create 50+ tiles by adding themed variants of some base engines
+const variants = [];
+let idCounter = 1;
+for(let i=0;i<baseTiles.length;i++){
+  variants.push(baseTiles[i]); // keep original
+}
+const extraVariantCount = 42; // to exceed 50 total
+const variantNames = [
+  'Neon Rush','Nightfall','Speed Run','Zen Mode','Hardcore','Relax','Time Attack','Mirror Mode','Tiny Screen','Giant Bricks',
+  'Retro Pixels','Gravity Flip','One Life','Two Players','Endless','Arcade Remix','Boss Rush','Colorblind Mode','Double Trouble','Shuffle',
+  'Turbo','Calm','Precision','Marathon','Sprint','Arcade Remix II','L33t','No Borders','Freeze Time','Magnet',
+  'Phantom','Echo','Chaos','Steady','Zen Garden','Lava','Fog','Rain','Solar','Lunar','Comet','Galaxy'
+];
+for(let i=0;i<extraVariantCount;i++){
+  const base = baseTiles[i % baseTiles.length];
+  const vname = variantNames[i % variantNames.length] || ('Variant '+i);
+  const vid = `${base.id}_v${i+1}`;
+  variants.push({ id: vid, title: `${base.title} — ${vname}`, tag: base.tag, cat: base.cat, baseRef: base.id, variantIndex: i });
+}
+const allTiles = variants;
+
+// populate categories
+const cats = [...new Set(allTiles.map(t=>t.cat || 'Misc'))];
+const categoriesEl = $('categories');
+cats.forEach(c=>{
+  const chip = document.createElement('div'); chip.className='chip'; chip.textContent=c;
+  chip.addEventListener('click', ()=>{ document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active')); chip.classList.add('active'); applyFilter(); });
+  categoriesEl.appendChild(chip);
+});
+
+// build grid
+const grid = $('gameGrid');
+function buildGrid(tiles){
+  grid.innerHTML='';
+  tiles.forEach(tile=>{
+    const el = document.createElement('div'); el.className='tile';
+    const h = document.createElement('h3'); h.textContent = tile.title;
+    const p = document.createElement('p'); p.textContent = tile.baseRef ? (`Variant of ${tile.baseRef}`) : tile.desc || '';
+    const meta = document.createElement('div'); meta.className='meta'; meta.innerHTML = `<span class="muted">${tile.cat || 'Misc'}</span><span class="muted">${tile.tag||''}</span>`;
+    el.appendChild(h); el.appendChild(p); el.appendChild(meta);
+    el.addEventListener('click', ()=>{ loadGame(tile); });
+    grid.appendChild(el);
+  });
+}
+buildGrid(allTiles);
+
+// search/filter
+$('search').addEventListener('input', applyFilter);
+function applyFilter(){
+  const q = $('search').value.toLowerCase().trim();
+  const activeCat = document.querySelector('.chip.active')?.textContent;
+  const filtered = allTiles.filter(t=>{
+    const matchesQ = !q || t.title.toLowerCase().includes(q) || (t.desc||'').toLowerCase().includes(q) || (t.tag||'').toLowerCase().includes(q);
+    const matchesCat = !activeCat || t.cat === activeCat;
+    return matchesQ && matchesCat;
+  });
+  buildGrid(filtered);
+}
+
+// random button
+$('randomBtn').addEventListener('click', ()=>{
+  const pick = allTiles[Math.floor(Math.random()*allTiles.length)];
+  loadGame(pick);
+});
+
+// ---------------------- Loader ----------------------
+let currentCleanup = null;
+function updateUI({controlsHint, currentTitle, showRestart}={}){
+  if(controlsHint !== undefined) $('controlsHint').textContent = controlsHint || '';
+  if(currentTitle !== undefined) $('currentTitle').textContent = currentTitle || 'Choose a game';
+  if(showRestart !== undefined){
+    $('restartBtn').classList.toggle('hidden', !showRestart);
+  }
+}
+$('backBtn').addEventListener('click', ()=>{ unloadGame(); });
+$('restartBtn').addEventListener('click', ()=>{ if(window.lastLoaded) loadGame(window.lastLoaded); });
+
+function unloadGame(){
+  if(currentCleanup) { currentCleanup(); currentCleanup = null; }
+  const playArea = $('playArea');
+  playArea.innerHTML = `<div style="text-align:center;color:var(--muted);padding:28px">
+            <h2 style="margin:6px 0">Welcome to Arcadia</h2>
+            <div style="max-width:520px;margin:6px auto" class="muted">Pick from the grid of 50+ curated micro-games to play instantly.</div>
+          </div>`;
+  updateUI({currentTitle:'Choose a game', controlsHint:'', showRestart:false});
+  $('backBtn').classList.add('hidden');
+  window.lastLoaded = null;
+}
+
+function loadGame(tile){
+  // if variant -> map to base module and provide variant params
+  const gameId = tile.baseRef || tile.id;
+  const module = findGame(gameId);
+  if(!module){ // fallback: show placeholder interactive variant message
+    $('playArea').innerHTML = `<div style="padding:18px;color:var(--muted)">This variant is a themed variant of ${gameId}, but the base engine isn't available. Try another tile.</div>`;
+    return;
+  }
+  // prepare container
+  const playArea = $('playArea'); playArea.innerHTML = '';
+  const container = document.createElement('div'); container.style.width='100%'; container.style.height='100%'; playArea.appendChild(container);
+  updateUI({currentTitle: tile.title || module.title, controlsHint:'', showRestart:true});
+  $('backBtn').classList.remove('hidden');
+  // if module is a variant accept params
+  const params = { variant: tile.variantIndex || 0, variantName: tile.title };
+  // call play
+  if(currentCleanup) { currentCleanup(); currentCleanup = null; }
+  window.lastLoaded = tile;
+  const cleanup = module.play({container,params,done:(res)=>{ /* optional */ updateUI({controlsHint:'Game ended — use Back to select another.'}); }, updateUI});
+  currentCleanup = (typeof cleanup === 'function') ? cleanup : null;
+}
+
+// initialize selection state
+unloadGame();
+
+// keyboard for mobile buttons mapping (on-screen)
+['btn-left','btn-up','btn-down','btn-right','btn-action'].forEach(id=>{
+  const el = $(id);
+  el && addTouchHold(el, ()=>{
+    // synthesize key-like events for running games
+    const ev = new KeyboardEvent('keydown', {key:'ArrowLeft'});
+    window.dispatchEvent(ev);
+  });
+});
+function addTouchHold(el, onTap){
+  el.addEventListener('touchstart', e=>{ e.preventDefault(); el.classList.add('active'); onTap(); }, {passive:false});
+  el.addEventListener('touchend', e=>{ el.classList.remove('active'); }, {passive:true});
+}
+
+
+// ---------------------- Final tweaks --------------
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden && currentCleanup){ /* could pause */ } });
+
+</script>
+</body>
+</html>
