@@ -2,258 +2,114 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Game Hub</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ultimate Game Hub</title>
 <style>
-  body, html { margin:0; padding:0; font-family:sans-serif; background:#111; color:#fff; overflow:hidden; }
-  #menu, #gameView { position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; }
-  #menu { overflow-y:auto; background: linear-gradient(180deg,#222,#111); padding:20px; }
-  .gameButton { background:#333; border:1px solid #444; padding:15px; margin:10px 0; border-radius:8px; cursor:pointer; text-align:center; transition:0.2s; }
-  .gameButton:hover { background:#444; }
-  #gameView { display:none; background:#000; flex-direction:column; align-items:center; justify-content:flex-start; }
-  #backBtn { background:#222; padding:10px 20px; border:1px solid #555; cursor:pointer; margin:10px; border-radius:6px; align-self:flex-start; }
-  #gameContainer { flex:1; width:100%; display:flex; align-items:center; justify-content:center; position:relative; background:#000; }
-  canvas { background:#111; max-width:100%; max-height:100%; display:block; }
-  #controlsOverlay { position:absolute; bottom:10px; left:50%; transform:translateX(-50%); display:flex; gap:20px; opacity:0.7; }
-  .controlBtn { width:50px; height:50px; background:rgba(255,255,255,0.1); border:2px solid #fff; border-radius:50%; text-align:center; line-height:46px; font-weight:bold; font-size:20px; user-select:none; }
+  /* Global Styles */
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+  body, html { width: 100%; height: 100%; overflow: hidden; background: linear-gradient(135deg, #1e1e2f, #3e3e5e); color: #fff; }
+  a { text-decoration: none; color: inherit; }
+  
+  /* Home Menu */
+  #home { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; padding: 20px; gap: 20px; overflow-y: auto; height: 100vh; }
+  .game-card { width: 180px; height: 220px; background: rgba(255,255,255,0.05); border-radius: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s, background 0.2s; }
+  .game-card:hover { transform: scale(1.05); background: rgba(255,255,255,0.15); }
+  .game-card img { width: 80%; height: 120px; object-fit: cover; border-radius: 10px; margin-bottom: 10px; }
+  .game-card h3 { font-size: 1rem; text-align: center; }
+
+  /* Game View */
+  #game-view { display: none; flex-direction: column; width: 100%; height: 100vh; position: relative; background: #111; }
+  #game-frame { flex: 1; width: 100%; border: none; }
+  #back-btn { position: absolute; top: 15px; left: 15px; background: rgba(255,255,255,0.2); border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; z-index: 10; transition: background 0.2s; }
+  #back-btn:hover { background: rgba(255,255,255,0.4); }
+
+  /* On-Screen Controls */
+  #controls { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; gap: 15px; z-index: 10; }
+  .control-btn { width: 60px; height: 60px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; cursor: pointer; transition: background 0.2s; user-select: none; }
+  .control-btn:hover { background: rgba(255,255,255,0.3); }
+
+  /* Gesture Blocking Overlay */
+  #gesture-block { position: absolute; top:0; left:0; width:100%; height:100%; z-index: 5; display:none; }
 </style>
 </head>
 <body>
-<div id="menu"></div>
-<div id="gameView">
-  <div id="backBtn">← Back</div>
-  <div id="gameContainer">
-    <canvas id="gameCanvas"></canvas>
-    <div id="controlsOverlay"></div>
+
+<div id="home">
+  <!-- Example Game Cards, repeat for 50+ unique games -->
+  <div class="game-card" data-game="snake" data-controls="arrows">
+    <img src="https://i.imgur.com/fZxQpA1.png" alt="Snake Game">
+    <h3>Snake Adventure</h3>
   </div>
+  <div class="game-card" data-game="shooter" data-controls="joystick">
+    <img src="https://i.imgur.com/5U4qE0t.png" alt="Shooter Game">
+    <h3>Space Shooter</h3>
+  </div>
+  <div class="game-card" data-game="puzzle" data-controls="none">
+    <img src="https://i.imgur.com/0xq1YQD.png" alt="Puzzle Game">
+    <h3>Mind Puzzle</h3>
+  </div>
+  <!-- ... Add 47+ more game cards with unique images and titles ... -->
+</div>
+
+<div id="game-view">
+  <button id="back-btn">⬅ Back</button>
+  <iframe id="game-frame"></iframe>
+  <div id="gesture-block"></div>
+  <div id="controls"></div>
 </div>
 
 <script>
-// ------------------- GAME DEFINITIONS -------------------
-const games = [
-  { name: "Snake Classic", fn: snakeGame, controls: true },
-  { name: "Flappy Bird", fn: flappyBird, controls: true },
-  { name: "Breakout", fn: breakoutGame, controls: true },
-  { name: "Pong", fn: pongGame, controls: true },
-  { name: "Minesweeper", fn: minesweeperGame, controls: false },
-  { name: "Tic-Tac-Toe", fn: ticTacToeGame, controls: false },
-  { name: "Memory Match", fn: memoryMatchGame, controls: false },
-  { name: "Platform Jumper", fn: platformJumper, controls: true },
-  { name: "Asteroids", fn: asteroidsGame, controls: true },
-  { name: "2048", fn: game2048, controls: false },
-  { name: "Sudoku", fn: sudokuGame, controls: false },
-  { name: "Word Search", fn: wordSearch, controls: false },
-  { name: "Crossword Mini", fn: crosswordMini, controls: false },
-  { name: "Typing Test", fn: typingTest, controls: false },
-  { name: "Reaction Speed", fn: reactionSpeed, controls: false },
-  { name: "Tower Defense Lite", fn: towerDefense, controls: true },
-  { name: "Space Invaders", fn: spaceInvaders, controls: true },
-  { name: "Fruit Catcher", fn: fruitCatcher, controls: true },
-  { name: "Color Match", fn: colorMatch, controls: false },
-  { name: "Clicker Game", fn: clickerGame, controls: false },
-  { name: "Sliding Puzzle", fn: slidingPuzzle, controls: false },
-  { name: "Maze Runner", fn: mazeRunner, controls: true },
-  { name: "Endless Runner", fn: endlessRunner, controls: true },
-  { name: "Car Dodger", fn: carDodger, controls: true },
-  { name: "Helicopter Game", fn: helicopterGame, controls: true },
-  { name: "Geometry Dodge", fn: geometryDodge, controls: true },
-  { name: "Simon Says", fn: simonSays, controls: false },
-  { name: "Trivia Quiz", fn: triviaQuiz, controls: false },
-  { name: "Hangman", fn: hangmanGame, controls: false },
-  { name: "Math Challenge", fn: mathChallenge, controls: false },
-  { name: "Chess Mini", fn: chessMini, controls: false },
-  { name: "Checkers", fn: checkersGame, controls: false },
-  { name: "Reversi", fn: reversiGame, controls: false },
-  { name: "Connect Four", fn: connectFour, controls: false },
-  { name: "Dots and Boxes", fn: dotsAndBoxes, controls: false },
-  { name: "Ball Bounce", fn: ballBounce, controls: true },
-  { name: "Stack Builder", fn: stackBuilder, controls: true },
-  { name: "Brick Stacker", fn: brickStacker, controls: true },
-  { name: "Fishing Clicker", fn: fishingClicker, controls: false },
-  { name: "Idle Miner", fn: idleMiner, controls: false },
-  { name: "Cookie Tapper", fn: cookieTapper, controls: false },
-  { name: "Pixel Painter", fn: pixelPainter, controls: true },
-  { name: "Music Tiles", fn: musicTiles, controls: true },
-  { name: "Piano Hero", fn: pianoHero, controls: true },
-  { name: "Dance Beats", fn: danceBeats, controls: true },
-  { name: "Whack-a-Mole", fn: whackAMole, controls: true },
-  { name: "Archery", fn: archeryGame, controls: true },
-  { name: "Bowling", fn: bowlingGame, controls: true },
-  { name: "Mini Golf", fn: miniGolf, controls: true },
-  { name: "Soccer Kick", fn: soccerKick, controls: true },
-  { name: "Basketball Shots", fn: basketballShots, controls: true },
-  { name: "Baseball Swing", fn: baseballSwing, controls: true },
-  { name: "Air Hockey", fn: airHockey, controls: true }
-];
+  const home = document.getElementById('home');
+  const gameView = document.getElementById('game-view');
+  const gameFrame = document.getElementById('game-frame');
+  const backBtn = document.getElementById('back-btn');
+  const controls = document.getElementById('controls');
+  const gestureBlock = document.getElementById('gesture-block');
 
-// ------------------- UI SETUP -------------------
-const menu = document.getElementById("menu");
-const gameView = document.getElementById("gameView");
-const backBtn = document.getElementById("backBtn");
-const gameContainer = document.getElementById("gameContainer");
-const controlsOverlay = document.getElementById("controlsOverlay");
-let activeGameInterval;
+  const games = {
+    snake: { url: 'games/snake/index.html', controls: ['⬆','⬇','⬅','➡'], blockGestures: true },
+    shooter: { url: 'games/shooter/index.html', controls: ['🔫','💥'], blockGestures: true },
+    puzzle: { url: 'games/puzzle/index.html', controls: [], blockGestures: false },
+    // ... 47+ more games with their URLs, controls, and gesture settings ...
+  };
 
-// Generate menu buttons
-games.forEach((game, i) => {
-  const btn = document.createElement("div");
-  btn.className = "gameButton";
-  btn.innerText = (i+1) + ". " + game.name;
-  btn.onclick = () => openGame(game);
-  menu.appendChild(btn);
-});
-
-// Open a game
-function openGame(game) {
-  menu.style.display = "none";
-  gameView.style.display = "flex";
-
-  // Clear previous canvas
-  gameContainer.querySelectorAll("canvas").forEach(c=>c.remove());
-  const canvas = document.createElement("canvas");
-  canvas.id = "activeGame";
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight - 80;
-  gameContainer.insertBefore(canvas, controlsOverlay);
-
-  // Show controls if needed
-  if(game.controls){
-    controlsOverlay.style.display="flex";
-    controlsOverlay.innerHTML = `<div class="controlBtn">◀</div><div class="controlBtn">▲</div><div class="controlBtn">▼</div><div class="controlBtn">▶</div>`;
-  }else{
-    controlsOverlay.style.display="none";
-    controlsOverlay.innerHTML="";
+  function openGame(gameKey) {
+    const game = games[gameKey];
+    gameFrame.src = game.url;
+    home.style.display = 'none';
+    gameView.style.display = 'flex';
+    controls.innerHTML = '';
+    if(game.controls.length > 0) {
+      game.controls.forEach(c => {
+        const btn = document.createElement('div');
+        btn.classList.add('control-btn');
+        btn.textContent = c;
+        btn.addEventListener('click', () => {
+          gameFrame.contentWindow.postMessage({ action: 'control', value: c }, '*');
+        });
+        controls.appendChild(btn);
+      });
+      controls.style.display = 'flex';
+    } else {
+      controls.style.display = 'none';
+    }
+    gestureBlock.style.display = game.blockGestures ? 'block' : 'none';
   }
 
-  document.body.style.overflow="hidden";
-
-  // Run game logic
-  if(activeGameInterval) clearInterval(activeGameInterval);
-  activeGameInterval = game.fn(canvas);
-}
-
-// Back button
-backBtn.onclick = () => {
-  gameView.style.display="none";
-  menu.style.display="flex";
-  document.body.style.overflow="auto";
-  if(activeGameInterval) clearInterval(activeGameInterval);
-};
-
-// ------------------- SIMPLE GAME IMPLEMENTATIONS -------------------
-// Each function returns a setInterval or similar to run animation
-function snakeGame(canvas){
-  const ctx = canvas.getContext('2d');
-  let px=10, py=10, dx=1, dy=0, trail=[], tail=5;
-  document.addEventListener('keydown', e=>{
-    if(e.key==='ArrowUp'){dx=0; dy=-1;}
-    if(e.key==='ArrowDown'){dx=0; dy=1;}
-    if(e.key==='ArrowLeft'){dx=-1; dy=0;}
-    if(e.key==='ArrowRight'){dx=1; dy=0;}
+  document.querySelectorAll('.game-card').forEach(card => {
+    card.addEventListener('click', () => openGame(card.dataset.game));
   });
-  return setInterval(()=>{
-    px+=dx; py+=dy;
-    if(px<0) px=30; if(px>30) px=0;
-    if(py<0) py=30; if(py>30) py=0;
-    ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.fillStyle='#0f0';
-    trail.push({x:px,y:py});
-    while(trail.length>tail) trail.shift();
-    trail.forEach(p=>ctx.fillRect(p.x*20,p.y*20,18,18));
-  },100);
-}
 
-function flappyBird(canvas){
-  const ctx = canvas.getContext('2d');
-  let y=150, v=0, gravity=0.5;
-  document.addEventListener('keydown',()=>v=-8);
-  return setInterval(()=>{
-    v+=gravity; y+=v;
-    ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.fillStyle='#ff0'; ctx.fillRect(50,y,30,30);
-  },30);
-}
-
-function breakoutGame(canvas){
-  const ctx=canvas.getContext('2d');
-  let x=100,y=100,dx=4,dy=4, paddleX=200;
-  document.addEventListener('keydown', e=>{
-    if(e.key==='ArrowLeft') paddleX-=20;
-    if(e.key==='ArrowRight') paddleX+=20;
+  backBtn.addEventListener('click', () => {
+    gameFrame.src = '';
+    home.style.display = 'flex';
+    gameView.style.display = 'none';
   });
-  return setInterval(()=>{
-    x+=dx; y+=dy;
-    if(x<0||x>canvas.width-20) dx*=-1;
-    if(y<0||y>canvas.height-20) dy*=-1;
-    ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.fillStyle='#f00'; ctx.fillRect(x,y,20,20);
-    ctx.fillStyle='#0ff'; ctx.fillRect(paddleX,canvas.height-30,80,10);
-  },30);
-}
 
-function pongGame(canvas){
-  const ctx=canvas.getContext('2d');
-  let px=10, py=100, ex=canvas.width-20, ey=100, bx=canvas.width/2, by=canvas.height/2, bdx=4, bdy=3;
-  return setInterval(()=>{
-    bx+=bdx; by+=bdy;
-    if(by<0||by>canvas.height-10) bdy*=-1;
-    if((bx<px+10&&by>py&&by<py+80)||(bx>ex-10&&by>ey&&by<ey+80)) bdx*=-1;
-    ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.fillStyle='#0f0'; ctx.fillRect(px,py,10,80);
-    ctx.fillRect(ex,ey,10,80); ctx.fillRect(bx,by,10,10);
-  },30);
-}
-
-function minesweeperGame(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Minesweeper Placeholder",50,50); }
-function ticTacToeGame(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Tic-Tac-Toe Placeholder",50,50); }
-function memoryMatchGame(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Memory Match Placeholder",50,50); }
-function platformJumper(canvas){ const ctx=canvas.getContext('2d'); let y=200, vy=0, gravity=0.5; document.addEventListener('keydown',()=>vy=-10); return setInterval(()=>{ vy+=gravity; y+=vy; ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#f0f'; ctx.fillRect(100,y,30,30); },30); }
-function asteroidsGame(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Asteroids Placeholder",50,50); }
-function game2048(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("2048 Placeholder",50,50); }
-function sudokuGame(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Sudoku Placeholder",50,50); }
-function wordSearch(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Word Search Placeholder",50,50); }
-function crosswordMini(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Crossword Placeholder",50,50); }
-function typingTest(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Typing Test Placeholder",50,50); }
-function reactionSpeed(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Reaction Speed Placeholder",50,50); }
-function towerDefense(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Tower Defense Placeholder",50,50); }
-function spaceInvaders(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Space Invaders Placeholder",50,50); }
-function fruitCatcher(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Fruit Catcher Placeholder",50,50); }
-function colorMatch(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Color Match Placeholder",50,50); }
-function clickerGame(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Clicker Game Placeholder",50,50); }
-function slidingPuzzle(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Sliding Puzzle Placeholder",50,50); }
-function mazeRunner(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Maze Runner Placeholder",50,50); }
-function endlessRunner(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Endless Runner Placeholder",50,50); }
-function carDodger(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Car Dodger Placeholder",50,50); }
-function helicopterGame(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Helicopter Game Placeholder",50,50); }
-function geometryDodge(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Geometry Dodge Placeholder",50,50); }
-function simonSays(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Simon Says Placeholder",50,50); }
-function triviaQuiz(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Trivia Quiz Placeholder",50,50); }
-function hangmanGame(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Hangman Placeholder",50,50); }
-function mathChallenge(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Math Challenge Placeholder",50,50); }
-function chessMini(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Chess Mini Placeholder",50,50); }
-function checkersGame(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Checkers Placeholder",50,50); }
-function reversiGame(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Reversi Placeholder",50,50); }
-function connectFour(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Connect Four Placeholder",50,50); }
-function dotsAndBoxes(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Dots and Boxes Placeholder",50,50); }
-function ballBounce(canvas){ const ctx=canvas.getContext('2d'); let x=100,y=100,dx=4,dy=4; return setInterval(()=>{ x+=dx;y+=dy;if(x<0||x>canvas.width-20) dx*=-1;if(y<0||y>canvas.height-20) dy*=-1; ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#f00'; ctx.fillRect(x,y,20,20); },30); }
-function stackBuilder(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Stack Builder Placeholder",50,50); }
-function brickStacker(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Brick Stacker Placeholder",50,50); }
-function fishingClicker(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Fishing Clicker Placeholder",50,50); }
-function idleMiner(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Idle Miner Placeholder",50,50); }
-function cookieTapper(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Cookie Tapper Placeholder",50,50); }
-function pixelPainter(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Pixel Painter Placeholder",50,50); }
-function musicTiles(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Music Tiles Placeholder",50,50); }
-function pianoHero(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Piano Hero Placeholder",50,50); }
-function danceBeats(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Dance Beats Placeholder",50,50); }
-function whackAMole(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Whack-a-Mole Placeholder",50,50); }
-function archeryGame(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Archery Placeholder",50,50); }
-function bowlingGame(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Bowling Placeholder",50,50); }
-function miniGolf(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Mini Golf Placeholder",50,50); }
-function soccerKick(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Soccer Kick Placeholder",50,50); }
-function basketballShots(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Basketball Shots Placeholder",50,50); }
-function baseballSwing(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Baseball Swing Placeholder",50,50); }
-function airHockey(canvas){ const ctx=canvas.getContext('2d'); ctx.fillStyle='#111'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#fff'; ctx.fillText("Air Hockey Placeholder",50,50); }
-
+  // Optional: block gestures on mobile when needed
+  gestureBlock.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+  gestureBlock.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
 </script>
+
 </body>
 </html>
